@@ -1,0 +1,15 @@
+COMMIT := $(shell git rev-list --abbrev-commit -1 HEAD)
+
+native:
+	go build -ldflags "-s -w -X main.gitCommit=$(COMMIT)"
+
+linux:
+	GOOS=linux go build -ldflags "-s -w -X main.gitCommit=$(COMMIT)"
+
+macosx:
+	GOOS=darwin go build -ldflags "-s -w -X main.gitCommit=$(COMMIT)"
+
+windows:
+	GOOS=windows go build -ldflags "-s -w -X main.gitCommit=$(COMMIT)"
+
+.PHONY: native linux macosx windows
