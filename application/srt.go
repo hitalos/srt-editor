@@ -1,14 +1,18 @@
-package types
+package application
 
 import (
 	"bufio"
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
+)
+
+var (
+	ErrNotFound = errors.New("not found")
 )
 
 // Srt a collection of Subtitle
@@ -24,11 +28,11 @@ func (srt *Srt) Load(file string) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
-	bs, err := ioutil.ReadAll(f)
+	bs, err := io.ReadAll(f)
 	if err != nil {
-		return err
+		return fmt.Errorf("error reading file: %s", err)
 	}
 	return srt.UnmarshalText(bs)
 }
@@ -52,25 +56,40 @@ func (srt *Srt) MarshalText() ([]byte, error) {
 	return out, nil
 }
 
+func loadSubtitle(bs []byte) (Subtitle, error) {
+	sub := Subtitle{}
+	if err := sub.UnmarshalText(bs); err != nil && err != io.EOF {
+		return sub, fmt.Errorf("error parsing the subtitle: %q\n%s", bs, err)
+	}
+	return sub, nil
+}
+
 // UnmarshalText converts from bytes to Srt object
 func (srt *Srt) UnmarshalText(content []byte) error {
-	var err error
-	var bs []byte
+	var (
+		err error
+		bs  []byte
+		sub Subtitle
+	)
 	reader := bufio.NewReader(bytes.NewReader(content))
 	for line, err := reader.ReadBytes('\n'); err == nil; line, err = reader.ReadBytes('\n') {
-		if len(bytes.TrimSpace(line)) == 0 {
-			sub := Subtitle{}
-			if err = sub.UnmarshalText(bs); err != nil {
-				return err
-			}
-			srt.Subtitles = append(srt.Subtitles, sub)
-			bs = []byte{}
+		if len(bytes.TrimSpace(line)) != 0 {
+			bs = append(bs, line...)
 			continue
 		}
-		bs = append(bs, line...)
+
+		if sub, err = loadSubtitle(bs); err != nil {
+			return err
+		}
+		srt.Subtitles = append(srt.Subtitles, sub)
+		bs = []byte{}
 	}
-	if err != nil && err != io.EOF {
-		return err
+
+	if len(bs) != 0 {
+		if sub, err = loadSubtitle(bs); err != nil && err != io.EOF {
+			return err
+		}
+		srt.Subtitles = append(srt.Subtitles, sub)
 	}
 
 	return nil
@@ -82,7 +101,7 @@ func (srt *Srt) Save(file string) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	bs, err := srt.MarshalText()
 	if err != nil {
@@ -105,15 +124,15 @@ func (srt *Srt) Shift(d time.Duration) {
 // Search returns next row with a string
 func (srt *Srt) Search(text string, init int) (int, error) {
 	if text == "" {
-		return 0, errors.New("not found")
+		return 0, ErrNotFound
 	}
 	for row, sub := range srt.Subtitles {
 		if row <= init {
 			continue
 		}
-		if strings.Index(sub.Text, text) >= 0 {
+		if strings.Contains(sub.Text, text) {
 			return row, nil
 		}
 	}
-	return 0, errors.New("not found")
+	return 0, ErrNotFound
 }

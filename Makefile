@@ -12,4 +12,7 @@ macosx:
 windows:
 	GOOS=windows go build -ldflags "-s -w -X main.gitCommit=$(COMMIT)"
 
-.PHONY: native linux macosx windows
+install:
+	go install -ldflags "-s -w -X main.gitCommit=$(COMMIT)"
+
+.PHONY: native linux macosx windows install

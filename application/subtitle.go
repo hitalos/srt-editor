@@ -1,4 +1,4 @@
-package types
+package application
 
 import (
 	"bufio"
@@ -10,22 +10,24 @@ import (
 	"time"
 )
 
-const timeFormat = "15:04:05.999"
+const (
+	timeFormat = "15:04:05,999"
+
+	newLineSymbol = "⏎"
+)
 
 // Subtitle a text and interval representation
 type Subtitle struct {
 	Num    int
-	Start  time.Time
-	End    time.Time
+	Start  Timestamp
+	End    Timestamp
 	Text   string
 	Delete bool
 }
 
 // MarshalText converts object to bytes representation
 func (s *Subtitle) MarshalText() ([]byte, error) {
-	start := strings.Replace(s.Start.Format(timeFormat), ".", ",", -1)
-	end := strings.Replace(s.End.Format(timeFormat), ".", ",", -1)
-	out := fmt.Sprintf("%d\n%s --> %s\n%s\n\n", s.Num, start, end, s.Text)
+	out := fmt.Sprintf("%d\n%s --> %s\n%s\n\n", s.Num, s.Start, s.End, s.Text)
 	return []byte(out), nil
 }
 
@@ -38,30 +40,34 @@ func (s *Subtitle) UnmarshalText(bs []byte) error {
 	}
 
 	if s.Num, err = strconv.Atoi(string(bytes.TrimSpace(line))); err != nil {
-		return err
+		return fmt.Errorf("sequence error: %q\n%s", string(bs), err)
 	}
 
 	interval, err := reader.ReadString('\n')
 	if err != nil {
 		return err
 	}
-	interval = strings.TrimSpace(strings.Replace(interval, ",", ".", -1))
+	interval = strings.TrimSpace(interval)
 	times := strings.Split(interval, " --> ")
-	s.Start, err = time.Parse(timeFormat, times[0])
+	start, err := time.Parse(timeFormat, times[0])
 	if err != nil {
 		return err
 	}
-	s.End, err = time.Parse(timeFormat, times[1])
+	end, err := time.Parse(timeFormat, times[1])
 	if err != nil {
 		return err
 	}
+
+	s.Start, s.End = Timestamp(start), Timestamp(end)
 
 	for line, err := reader.ReadBytes('\n'); err == nil; line, err = reader.ReadBytes('\n') {
 		s.Text = s.Text + string(bytes.TrimSpace(line)) + "\n"
 	}
 	s.Text = strings.TrimSpace(s.Text)
-	if err != nil && err != io.EOF {
-		return err
+
+	if err == io.EOF {
+		return nil
 	}
-	return nil
+
+	return err
 }
