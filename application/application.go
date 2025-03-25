@@ -73,6 +73,10 @@ func (app *Application) setTable() {
 		app.UI.SetFocus(app.menu)
 	})
 
+	app.setTableLines()
+}
+
+func (app *Application) setColumNames() {
 	for i, col := range []string{"Num", "Start", "End", "Text"} {
 		cell := tview.NewTableCell(col).
 			SetTextColor(tview.Styles.PrimaryTextColor).
@@ -81,11 +85,12 @@ func (app *Application) setTable() {
 
 		app.table.SetCell(0, i, cell).SetBorder(true)
 	}
-
-	app.setTableLines()
 }
 
 func (app *Application) setTableLines() {
+	app.table.Clear()
+	app.setColumNames()
+
 	for i, sub := range app.srt.Subtitles {
 		num := fmt.Sprintf("%4d", sub.Num)
 		text := strings.ReplaceAll(sub.Text, "\n", newLineSymbol)
@@ -124,6 +129,13 @@ func (app *Application) save() {
 		os.Exit(-1)
 	}
 	app.showMessage("File saved successfully!")
+
+	if err := app.srt.Load(app.srt.Filename); err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+
+	app.setTableLines()
 }
 
 func (app *Application) convert2UTF() {

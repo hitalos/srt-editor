@@ -72,6 +72,9 @@ func (srt *Srt) UnmarshalText(content []byte) error {
 		bs  []byte
 		sub Subtitle
 	)
+
+	srt.Subtitles = []Subtitle{}
+
 	reader := bufio.NewReader(bytes.NewReader(content))
 	for line, err := reader.ReadBytes('\n'); err == nil; line, err = reader.ReadBytes('\n') {
 		if len(bytes.TrimSpace(line)) != 0 {
