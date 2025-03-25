@@ -13,6 +13,7 @@ var (
 		{"/", "Search"},
 		{"n", "Search Next"},
 		{"u", "Convert to UTF-8"},
+		{"Del or BS", "Toogle mark to deletion"},
 	}
 )
 
