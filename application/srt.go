@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -24,7 +25,7 @@ type Srt struct {
 // Load loads Srt from a file
 func (srt *Srt) Load(file string) error {
 	srt.Filename = file
-	f, err := os.Open(file)
+	f, err := os.Open(filepath.Clean(file))
 	if err != nil {
 		return err
 	}
@@ -97,7 +98,7 @@ func (srt *Srt) UnmarshalText(content []byte) error {
 
 // Save saves Srt to file
 func (srt *Srt) Save(file string) error {
-	f, err := os.Create(file)
+	f, err := os.Create(filepath.Clean(file))
 	if err != nil {
 		return err
 	}
