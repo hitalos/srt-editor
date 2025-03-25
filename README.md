@@ -1,6 +1,8 @@
 # SRT editor
 
-This is a experimental project to use the package `github.com/rivo/tview`.
+This is a experimental project to use the package [tview](http://github.com/rivo/tview).
+
+![Demo](demo.gif)
 
 ## Features
 
