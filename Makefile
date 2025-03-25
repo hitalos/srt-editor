@@ -15,4 +15,11 @@ windows:
 install:
 	go install -ldflags "-s -w -X main.gitCommit=$(COMMIT)"
 
+lint:
+	golangci-lint run ./...
+
+sec:
+	grype . --add-cpes-if-none
+	trivy fs .
+
 .PHONY: native linux macosx windows install
