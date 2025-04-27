@@ -159,7 +159,8 @@ func (app *Application) convert2UTF() {
 }
 
 func (app *Application) shift(direction string) {
-	form := tview.NewForm().AddInputField("Duration in milliseconds", "", 5, tview.InputFieldInteger, nil)
+	label := "Duration in milliseconds"
+	form := tview.NewForm().AddInputField(label, "", 5, tview.InputFieldInteger, nil)
 	form.AddButton("OK", func() {
 		text := form.GetFormItem(0).(*tview.InputField).GetText()
 		num, err := strconv.Atoi(direction + text)
@@ -174,7 +175,7 @@ func (app *Application) shift(direction string) {
 		action = " Subtract"
 	}
 	form.SetBorder(true).SetTitle(action + " time ")
-	app.showModal(form, 5, 3)
+	app.showModal(form, len(label)+10, 7)
 }
 
 func (app *Application) goToDefault() {
